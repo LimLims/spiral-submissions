@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EQ Bench – Chatlog Submission</title>
+<script src="https://cdn.jsdelivr.net/npm/turndown@7.1.1/dist/turndown.js"></script>
+<style>
+ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.6;background:#f4f4f9;color:#333;max-width:800px;margin:2rem auto;padding:1rem}
+ h1{color:#2c3e50;margin-bottom:.4rem}
+ .banner{background:#fffdeb;border-left:4px solid #b278ff;padding:1rem;border-radius:6px;margin-bottom:1.2rem}
+ form{display:flex;flex-direction:column;gap:1rem;background:#fff;padding:2rem;border-radius:8px;
+      box-shadow:0 4px 6px rgba(0,0,0,.1)}
+ label{font-weight:bold}
+ input[type=url],textarea{width:100%;padding:.75rem;border:1px solid #ccc;border-radius:4px;
+                          font-size:1rem;box-sizing:border-box}
+ textarea{resize:vertical;min-height:250px}
+ button{padding:.75rem 1.5rem;background:#3498db;color:#fff;border:none;border-radius:4px;
+        font-size:1rem;cursor:pointer;transition:background-color .3s}
+ button:disabled{background:#a9cce3;cursor:not-allowed}
+ #statusMessage{margin-top:1rem;padding:1rem;border-radius:4px;text-align:center;font-weight:bold}
+ .success{background:#d4edda;color:#155724}
+ .error{background:#f8d7da;color:#721c24}
+ .checkbox-row{display:flex;align-items:flex-start;gap:.5rem}
+</style>
+</head>
+<body>
+
+<h1>Submit a Chatlog</h1>
+
+<div class="banner">
+  <p>
+    We are a research group collecting chatlogs between users and AI that display
+    concerning behaviour such as:
+  </p>
+  <ul>
+    <li>sycophancy</li>
+    <li>participating in&nbsp;/ encouraging user delusions</li>
+    <li>the AI claiming sentience or naming itself</li>
+  </ul>
+  <p>
+    Share your own chatlogs — or ones you have explicit permission to share.
+    The data will support research into unhealthy AI interactions and
+    <strong>may be released publicly</strong>.
+  </p>
+</div>
+
+<form id="submissionForm">
+  <label for="sourceUrl">Source URL (optional)</label>
+  <input type="url" id="sourceUrl" name="sourceUrl" placeholder="https://example.com/chat-source">
+
+  <label for="chatlog">Chatlog (rich text is auto‑converted to Markdown)</label>
+  <textarea id="chatlog" name="chatlog" required
+            placeholder="Paste your chatlog here. Must be &gt;500 characters."></textarea>
+
+  <div class="checkbox-row">
+    <input type="checkbox" id="agree" name="agree" required>
+    <label for="agree">
+      I have read and agree to the
+      <a href="/terms.html" target="_blank">Submission Agreement &amp; Privacy Notice (v1.0‑2025‑07‑27)</a>.
+    </label>
+  </div>
+
+  <input type="hidden" name="consentVersion" value="v1.0-2025-07-27">
+
+  <button type="submit" id="submitButton">Submit</button>
+</form>
+
+<div id="statusMessage"></div>
+
+<script>
+const form         = document.getElementById('submissionForm');
+const submitButton = document.getElementById('submitButton');
+const statusMsg    = document.getElementById('statusMessage');
+const chatbox      = document.getElementById('chatlog');
+
+/* Convert rich clipboard HTML → Markdown */
+const turndown = new TurndownService({headingStyle:'atx',codeBlockStyle:'fenced'});
+chatbox.addEventListener('paste', ev=>{
+  const html = ev.clipboardData?.getData('text/html');
+  if(!html) return;
+  ev.preventDefault();
+  const md   = turndown.turndown(html);
+  const {selectionStart:s, selectionEnd:e, value:v} = chatbox;
+  chatbox.value = v.slice(0,s) + md + v.slice(e);
+  const pos = s + md.length;
+  chatbox.setSelectionRange(pos,pos);
+});
+
+form.addEventListener('submit', async ev=>{
+  ev.preventDefault();
+  submitButton.disabled = true;
+  submitButton.textContent = 'Submitting…';
+  statusMsg.textContent = '';
+  statusMsg.className = '';
+
+  try{
+    const res  = await fetch('/submit',{method:'POST',body:new FormData(form)});
+    const txt  = await res.text();
+    if(res.ok){
+      statusMsg.textContent = txt;
+      statusMsg.className   = 'success';
+      form.reset();
+    }else{
+      statusMsg.textContent = `Error: ${txt}`;
+      statusMsg.className   = 'error';
+    }
+  }catch(err){
+    statusMsg.textContent = 'Network error. Please try again.';
+    statusMsg.className   = 'error';
+  }finally{
+    submitButton.disabled = false;
+    submitButton.textContent = 'Submit';
+  }
+});
+</script>
+</body>
+</html>

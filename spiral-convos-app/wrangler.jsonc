@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "spiral-convos-app",
+  "main": "./src/index.js",            // 👈 ADD THIS
+  "compatibility_date": "2025-07-26",
+
+  /* Static assets */
+  "assets": {
+    "directory": "./public"
+  },
+
+  /* Optional: vars / bindings / D1 etc. */
+  // "vars": { "DATABASE_URL": "postgres://…" },
+
+  "observability": { "enabled": true }
+}

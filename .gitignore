@@ -1,0 +1,5 @@
+spiral-convos-app/.vscode
+spiral-convos-app/node_modules
+spiral-convos-app/.dev.vars
+.env
+bct.txt
